@@ -4,6 +4,19 @@ resource "aws_instance" "bastion" {
   subnet_id = local.public_subnet_id
   vpc_security_group_ids = [local.bastion_sg_id]
   iam_instance_profile = aws_iam_instance_profile.bastion.name
+  user_data = file("bastion.sh")
+
+  root_block_device {
+    volume_size = 50
+    volume_type = "gp3"
+    # EBS volume tags
+    tags = merge(
+      {
+          Name = "${var.project}-${var.environment}-bastion"
+      },
+    local.common_tags
+    )
+  }
 
   tags = merge(
     {
@@ -39,10 +52,9 @@ resource "aws_iam_role" "bastion" {
     local.common_tags
   )
 }
-
 resource "aws_iam_role_policy_attachment" "bastion" {
   role       = aws_iam_role.bastion.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
 # Create the instance profile
@@ -50,3 +62,5 @@ resource "aws_iam_instance_profile" "bastion" {
   name = "${var.project}-${var.environment}-bastion"
   role = aws_iam_role.bastion.name
 }
+
+# mongodb-dev.daws88s.online
